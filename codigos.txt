@@ -1,0 +1,122 @@
+
+//Playercontroller frank
+extends KinematicBody2D
+
+var player_health = 3
+var enemy_health = 3
+var attack_cooldown = 1.0
+var attack_timer = 0.0
+var enemy
+
+func _ready():
+    enemy = get_node("../EnemyController")
+    
+func _process(delta):
+    attack_timer += delta
+
+    if Input.is_action_just_pressed("ui_attack") and attack_timer >= attack_cooldown:
+        attack()
+    elif Input.is_action_just_pressed("ui_strong_attack") and attack_timer >= attack_cooldown:
+        strong_attack()
+    elif Input.is_action_just_pressed("ui_defend"):
+        defend()
+
+func attack():
+    attack_timer = 0.0
+    if not enemy.is_defending:
+        enemy_health -= 1
+        check_enemy_health()
+
+func strong_attack():
+    attack_timer = 0.0
+    enemy_health -= 1
+    check_enemy_health()
+
+func defend():
+    # Implementar la lógica de defensa si es necesario
+    pass
+
+func check_enemy_health():
+    if enemy_health <= 0:
+        enemy.queue_free()
+        enemy_health = 3
+        var new_enemy = enemy.instance()
+        get_parent().add_child(new_enemy)
+        new_enemy.global_position = Vector2(300, 200)  # Posición del nuevo enemigo
+
+
+
+
+//script diferente
+//enemy controller
+extends KinematicBody2D
+
+var health = 3
+var is_defending = false
+var action_timer = 0.0
+var action_cooldown = 2.0
+var player
+
+func _ready():
+    player = get_node("../PlayerController")
+
+func _process(delta):
+    action_timer += delta
+
+    if action_timer >= action_cooldown:
+        perform_action()
+        action_timer = 0.0
+
+func perform_action():
+    var action = randi() % 3
+
+    match action:
+        0:
+            attack()
+        1:
+            strong_attack()
+        2:
+            defend()
+
+func attack():
+    if not player.is_defending:
+        player.player_health -= 1
+        check_player_health()
+
+func strong_attack():
+    player.player_health -= 1
+    check_player_health()
+
+func defend():
+    is_defending = true
+    yield(get_tree().create_timer(1.0), "timeout")
+    is_defending = false
+
+func check_player_health():
+    if player.player_health <= 0:
+        # Implementar lógica de fin del juego
+        pass
+
+
+//Script diferente
+//gamemanager.gd
+extends Node
+
+var player_health_label
+var enemy_health_label
+var player
+var enemy
+
+func _ready():
+    player_health_label = get_node("CanvasLayer/PlayerHealth")
+    enemy_health_label = get_node("CanvasLayer/EnemyHealth")
+    player = get_node("PlayerController")
+    enemy = get_node("EnemyController")
+
+func _process(delta):
+    player_health_label.text = "Player Health: " + str(player.player_health)
+    enemy_health_label.text = "Enemy Health: " + str(player.enemy_health)
+
+    if player.player_health <= 0:
+        # Implementar lógica de fin del juego
+        pass
